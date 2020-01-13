@@ -3,13 +3,6 @@ import dlib
 import numpy as np
 from math import hypot
 
-# cap = cv2.VideoCapture("/Users/pu/Documents/work/test.mp4")
-cap = cv2.VideoCapture(0)
-font = cv2.FONT_HERSHEY_SIMPLEX
-detector = dlib.get_frontal_face_detector()
-predictors = dlib.shape_predictor("/Users/pu/Documents/work/model/benchmark/shape_predictor_68_face_landmarks.dat")
-
-
 def midpoint(p1, p2):
     return int((p1.x + p2.x) / 2), int((p1.y + p2.y) / 2)
 
@@ -69,48 +62,51 @@ def get_gaze_ratio(eyepoints, facial_landmarks):
     return gaze_ratio
 
 
-while True:
-    _, frame = cap.read()
-    new_frame = np.zeros((500, 500, 3))
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = detector(gray)
-    for face in faces:
-        # x,y=face.left(),face.top()
-        # x1,y1= face.right(), face.bottom()
-        # cv2.rectangle(frame, (x,y),(x1,y1),(0,255,0),2)
+if __name__ == '__main__':
+    # cap = cv2.VideoCapture("/Users/pu/Documents/work/test.mp4")
+    cap = cv2.VideoCapture(0)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    detector = dlib.get_frontal_face_detector()
+    predictors = dlib.shape_predictor("/Users/pu/Documents/work/model/benchmark/shape_predictor_68_face_landmarks.dat")
+    while True:
+        _, frame = cap.read()
+        new_frame = np.zeros((500, 500, 3))
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = detector(gray)
+        for face in faces:
+            landmarks = predictors(gray, face)
 
-        landmarks = predictors(gray, face)
+            # Detect Blinking
+            # left_eye_ratio = get_blinking_ratio([36, 37, 38, 39, 40, 41], landmarks)
+            # right_eye_ratio = get_blinking_ratio([42, 43, 44, 45, 46, 47], landmarks)
+            # blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
+            # if blinking_ratio > 5.7:
+            #     cv2.putText(frame, "Blinking", (50, 150), font, 7, (255, 0, 0), 3)
+            gaze_ratio_left_eye = get_gaze_ratio([36, 37, 38, 39, 40, 41], landmarks)
+            gaze_ratio_right_eye = get_gaze_ratio([42, 43, 44, 45, 46, 47], landmarks)
+            gaze_ratio = (gaze_ratio_left_eye + gaze_ratio_right_eye) / 2
+            eye_points_left = [36, 37, 38, 39, 40, 41]
+            eye_points_right = [42, 43, 44, 45, 46, 47]
+            for i in range(len(eye_points_left)):
+                (a, b) = (landmarks.part(eye_points_left[i]).x, landmarks.part(eye_points_left[i]).y)
+                (c, d) = (landmarks.part(eye_points_right[i]).x, landmarks.part(eye_points_right[i]).y)
+                cv2.circle(frame, (a, b), 1, (0, 0, 255), -1)  # 画图
+                cv2.circle(frame, (c, d), 1, (0, 0, 255), -1)
+            if gaze_ratio <= 0.45:
+                cv2.putText(frame, str("RIGHT"), (50, 100), font, 2, (0, 0, 255), 3)
+                new_frame[:] = (0, 0, 255)
+            elif 0.45 < gaze_ratio < 2.0:
+                cv2.putText(frame, str("CENTER"), (50, 100), font, 2, (0, 255, 0), 3)
+                new_frame[:] = (0, 255, 0)
+            else:
+                cv2.putText(frame, str("LEFT"), (50, 100), font, 2, (255, 0, 0), 3)
+                new_frame[:] = (255, 0, 0)
 
-        # Detect Blinking
-        left_eye_ratio = get_blinking_ratio([36, 37, 38, 39, 40, 41], landmarks)
-        right_eye_ratio = get_blinking_ratio([42, 43, 44, 45, 46, 47], landmarks)
+        cv2.imshow("Frame", frame)
+        cv2.imshow("New Frame", new_frame)
+        key = cv2.waitKey(1)
 
-        blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
-
-        if blinking_ratio > 5.7:
-            cv2.putText(frame, "Blinking", (50, 150), font, 7, (255, 0, 0))
-
-        # Gaze Detection
-
-        gaze_ratio_left_eye = get_gaze_ratio([36, 37, 38, 39, 40, 41], landmarks)
-        gaze_ratio_right_eye = get_gaze_ratio([42, 43, 44, 45, 46, 47], landmarks)
-        gaze_ratio = (gaze_ratio_left_eye + gaze_ratio_right_eye) / 2
-
-        if gaze_ratio <= 0.8:
-            cv2.putText(frame, str("RIGHT"), (50, 100), font, 2, (0, 0, 255), 3)
-            new_frame[:] = (0, 0, 255)
-        elif 0.8 < gaze_ratio < 1.7:
-            cv2.putText(frame, str("CENTER"), (50, 100), font, 2, (0, 0, 255), 3)
-
-        else:
-            cv2.putText(frame, str("LEFT"), (50, 100), font, 2, (0, 0, 255), 3)
-            new_frame[:] = (255, 0, 0)
-
-    cv2.imshow("Frame", frame)
-    cv2.imshow("New Frame", new_frame)
-    key = cv2.waitKey(1)
-
-    if key == 27:
-        break
-cap.release()
-cv2.destroyAllWindows()
+        if key == 27:
+            break
+    cap.release()
+    cv2.destroyAllWindows()
