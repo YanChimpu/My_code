@@ -2,19 +2,22 @@
 
 import cv2
 import numpy as np
+from landmarks import LandmarksDetction
 
 # Read Image
 im = cv2.imread("/Users/pu/Documents/work/data/my_test_data/img/40.jpg")
 size = im.shape
-
+land_detector = LandmarksDetction()
+landmarks = land_detector.face_detection(im)
+key_points = [30, 8, 36, 45, 48, 54]
 # 2D image points. If you change the image, you need to change vector
 image_points = np.array([
-    (359, 391),  # Nose tip
-    (399, 561),  # Chin
-    (337, 297),  # Left eye left corner
-    (513, 301),  # Right eye right corne
-    (345, 465),  # Left Mouth corner
-    (453, 469)  # Right mouth corner
+    (landmarks.part(key_points[0]).x, landmarks.part(key_points[0]).y),  # Nose tip
+    (landmarks.part(key_points[1]).x, landmarks.part(key_points[1]).y),  # Chin
+    (landmarks.part(key_points[2]).x, landmarks.part(key_points[2]).y),  # Left eye left corner
+    (landmarks.part(key_points[3]).x, landmarks.part(key_points[3]).y),  # Right eye right corne
+    (landmarks.part(key_points[4]).x, landmarks.part(key_points[4]).y),  # Left Mouth corner
+    (landmarks.part(key_points[5]).x, landmarks.part(key_points[5]).y)  # Right mouth corner
 ], dtype="double")
 
 # 3D model points.
