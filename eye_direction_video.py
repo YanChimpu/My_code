@@ -43,23 +43,34 @@ def get_gaze_ratio(eyepoints, facial_landmarks):
 
     gray_eye = eye[min_y:max_y, min_x:max_x]
     # gray_eye=cv2.cvtColor(eye,cv2.COLOR_BGR2GRAY)
-    _, threshold_eye = cv2.threshold(gray_eye, 70, 255, cv2.THRESH_BINARY)
+    _, threshold_eye = cv2.threshold(gray_eye, 100, 255, cv2.THRESH_BINARY)
     threshold_eye = cv2.resize(threshold_eye, None, fx=5, fy=5)
     # cv2.imshow("Threshold", threshold_eye)
+
+
     height, width = threshold_eye.shape
     left_side_threshold = threshold_eye[0: height, 0: int(width / 2)]
     left_side_white = cv2.countNonZero(left_side_threshold)
-
+    up_side_threshold = threshold_eye[0: int(height / 2), 0: width]
+    up_side_white = cv2.countNonZero(up_side_threshold)
     right_side_threshold = threshold_eye[0:height, int(width / 2): width]
     right_side_white = cv2.countNonZero(right_side_threshold)
+    down_side_threshold = threshold_eye[int(height / 2): height, 0: width]
+    down_side_white = cv2.countNonZero(down_side_threshold)
 
     if left_side_white == 0:
-        gaze_ratio = 1
+        gaze_ratio_hor = 1
     elif right_side_white == 0:
-        gaze_ratio = 1.3
+        gaze_ratio_hor = 1.3
     else:
-        gaze_ratio = left_side_white / right_side_white
-    return gaze_ratio
+        gaze_ratio_hor = left_side_white / right_side_white
+    if up_side_white == 0:
+        gaze_ratio_por = 1
+    elif down_side_white == 0:
+        gaze_ratio_por = 1.3
+    else:
+        gaze_ratio_por = up_side_white / down_side_white
+    return gaze_ratio_hor, gaze_ratio_por
 
 
 if __name__ == '__main__':
@@ -82,8 +93,8 @@ if __name__ == '__main__':
             # blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
             # if blinking_ratio > 5.7:
             #     cv2.putText(frame, "Blinking", (50, 150), font, 7, (255, 0, 0), 3)
-            gaze_ratio_left_eye = get_gaze_ratio([36, 37, 38, 39, 40, 41], landmarks)
-            gaze_ratio_right_eye = get_gaze_ratio([42, 43, 44, 45, 46, 47], landmarks)
+            _, gaze_ratio_left_eye = get_gaze_ratio([36, 37, 38, 39, 40, 41], landmarks)
+            _, gaze_ratio_right_eye = get_gaze_ratio([42, 43, 44, 45, 46, 47], landmarks)
             gaze_ratio = (gaze_ratio_left_eye + gaze_ratio_right_eye) / 2
             eye_points_left = [36, 37, 38, 39, 40, 41]
             eye_points_right = [42, 43, 44, 45, 46, 47]
@@ -92,15 +103,25 @@ if __name__ == '__main__':
                 (c, d) = (landmarks.part(eye_points_right[i]).x, landmarks.part(eye_points_right[i]).y)
                 cv2.circle(frame, (a, b), 1, (0, 0, 255), -1)  # 画图
                 cv2.circle(frame, (c, d), 1, (0, 0, 255), -1)
-            if gaze_ratio <= 0.45:
-                cv2.putText(frame, str("RIGHT"), (50, 100), font, 2, (0, 0, 255), 3)
+            if gaze_ratio <= 0.4:
+                cv2.putText(frame, str("UP"), (50, 100), font, 2, (0, 0, 255), 3)
                 new_frame[:] = (0, 0, 255)
-            elif 0.45 < gaze_ratio < 2.0:
+            elif 0.4 < gaze_ratio < 1.05:
                 cv2.putText(frame, str("CENTER"), (50, 100), font, 2, (0, 255, 0), 3)
                 new_frame[:] = (0, 255, 0)
             else:
-                cv2.putText(frame, str("LEFT"), (50, 100), font, 2, (255, 0, 0), 3)
+                cv2.putText(frame, str("DOWN"), (50, 100), font, 2, (0, 0, 255), 3)
                 new_frame[:] = (255, 0, 0)
+
+            # if gaze_ratio <= 0.45:
+            #     cv2.putText(frame, str("RIGHT"), (50, 100), font, 2, (0, 0, 255), 3)
+            #     new_frame[:] = (0, 0, 255)
+            # elif 0.45 < gaze_ratio < 2.0:
+            #     cv2.putText(frame, str("CENTER"), (50, 100), font, 2, (0, 255, 0), 3)
+            #     new_frame[:] = (0, 255, 0)
+            # else:
+            #     cv2.putText(frame, str("LEFT"), (50, 100), font, 2, (255, 0, 0), 3)
+            #     new_frame[:] = (255, 0, 0)
 
         cv2.imshow("Frame", frame)
         cv2.imshow("New Frame", new_frame)
