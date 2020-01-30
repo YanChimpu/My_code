@@ -21,8 +21,8 @@ if __name__ == "__main__":
     landmarks = ld.face_detection(img)
     for i in range(68):
         (a, b) = (landmarks.part(i).x, landmarks.part(i).y)
-        # cv2.circle(img, (a, b), 3, (0, 0, 255), -1)  # 画图
-        cv2.putText(img, str(i), (a, b), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
-                (0,255,0), 1)
+        cv2.circle(img, (a, b), 3, (0, 0, 255), -1)  # 画图
+        # cv2.putText(img, str(i), (a, b), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+        #         (0,255,0), 1)
     cv2.imshow("Output", img)
     cv2.waitKey(0)
